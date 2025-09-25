@@ -114,7 +114,7 @@ function App() {
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="w-8 h-8 text-blue-600" />
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Dropout Prediction System</h1>
+                  <h1 className="text-xl font-bold text-gray-900">Ai Powered Dropout Predection And Counselling System</h1>
                   <p className="text-sm text-gray-600">Student Counseling Dashboard</p>
                 </div>
               </div>
