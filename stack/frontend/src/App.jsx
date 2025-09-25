@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, BarChart3, Users, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Search, Filter, BarChart3, Users, AlertTriangle, RefreshCw, Upload, Bell, UserCheck } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import StudentTable from './components/StudentTable';
 import StudentModal from './components/StudentModal';
+import DataUpload from './components/DataUpload';
+import NotificationCenter from './components/NotificationCenter';
+import TrendAnalysis from './components/TrendAnalysis';
+import MentorDashboard from './components/MentorDashboard';
 import { api } from './services/api';
 
 function App() {
@@ -12,6 +16,7 @@ function App() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showDataUpload, setShowDataUpload] = useState(false);
   const [filters, setFilters] = useState({
     department: '',
     riskLevel: '',
@@ -109,8 +114,8 @@ function App() {
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="w-8 h-8 text-blue-600" />
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">SIH 2025 - Dropout Prediction System</h1>
-                  <p className="text-sm text-gray-600">AI-based Student Counseling Dashboard</p>
+                  <h1 className="text-xl font-bold text-gray-900">Dropout Prediction System</h1>
+                  <p className="text-sm text-gray-600">Student Counseling Dashboard</p>
                 </div>
               </div>
             </div>
@@ -167,6 +172,58 @@ function App() {
               <div className="flex items-center space-x-2">
                 <Users className="w-4 h-4" />
                 <span>Students</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('trends')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                currentView === 'trends'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="w-4 h-4" />
+                <span>Trend Analysis</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('notifications')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                currentView === 'notifications'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Bell className="w-4 h-4" />
+                <span>Notifications</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('mentor')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                currentView === 'mentor'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <UserCheck className="w-4 h-4" />
+                <span>Mentor Dashboard</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setShowDataUpload(true)}
+              className="py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <div className="flex items-center space-x-2">
+                <Upload className="w-4 h-4" />
+                <span>Upload Data</span>
               </div>
             </button>
           </nav>
@@ -241,7 +298,30 @@ function App() {
             />
           </div>
         )}
+
+        {currentView === 'trends' && (
+          <TrendAnalysis students={students} />
+        )}
+
+        {currentView === 'notifications' && (
+          <NotificationCenter students={students} />
+        )}
+
+        {currentView === 'mentor' && (
+          <MentorDashboard students={students} />
+        )}
       </main>
+
+      {/* Data Upload Modal */}
+      {showDataUpload && (
+        <DataUpload
+          onDataUploaded={(newData) => {
+            setStudents(newData);
+            setShowDataUpload(false);
+          }}
+          onClose={() => setShowDataUpload(false)}
+        />
+      )}
 
       {/* Student Detail Modal */}
       {selectedStudent && prediction && (
