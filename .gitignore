@@ -11,12 +11,13 @@ lerna-debug.log*
 **/build/
 **/.vite/
 
-# Environment variables
+# Environment variables (but keep .env.example)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+!.env.example
 
 # Editor directories and files
 .vscode/
@@ -56,14 +57,16 @@ coverage/
 # Optional eslint cache
 .eslintcache
 
-# ML model files (too large for git)
+# ML model files (too large for git) - but keep small demo models
 **/*.pkl
 **/*.model
 **/*.h5
 **/*.joblib
 **/*.sav
+!**/demo*.pkl
+!**/sample*.pkl
 
-# Large CSV data files (keep small sample files)
+# Large CSV data files (over 1MB) - but allow smaller sample files
 ml/final_clean_students_14k.csv
 ml/attendance_14k_90days.csv
 ml/consolidated_students_14k.csv
@@ -71,9 +74,10 @@ ml/fees_14k.csv
 ml/students_identification_14k.csv
 ml/tests_14k_4tests.csv
 
-# But keep smaller sample/demo files
+# Keep sample/demo data files
 !ml/*sample*.csv
 !ml/*demo*.csv
+!ml/sample_students.csv
 
 # Python cache and temp files
 **/__pycache__/
@@ -87,7 +91,7 @@ ml/tests_14k_4tests.csv
 **/env.bak/
 **/venv.bak/
 
-# Jupyter Notebook
+# Jupyter Notebook checkpoints
 **/.ipynb_checkpoints/
 
 # Temporary folders
@@ -95,10 +99,6 @@ tmp/
 temp/
 **/tmp/
 **/temp/
-
-# Package lock files (keep them for consistent installs)
-# **/package-lock.json
-# **/yarn.lock
 
 # Output of 'npm pack'
 *.tgz
