@@ -150,34 +150,34 @@ const DataUpload = ({ onDataUploaded, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Data Upload & Integration</h2>
-            <p className="text-gray-600">Upload attendance, marks, and fee payment spreadsheets</p>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Data Upload & Integration</h2>
+            <p className="text-sm sm:text-base text-gray-600 hidden sm:block">Upload attendance, marks, and fee payment spreadsheets</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-6 h-6" />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0 ml-2">
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Step 1: File Upload */}
         {step === 1 && (
-          <div className="p-6 space-y-6">
-            <div className="flex items-center space-x-4 mb-6">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-semibold">1</span>
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Upload Spreadsheets</h3>
-                <p className="text-gray-600">Upload your existing attendance, marks, and fee data files</p>
+                <h3 className="text-base sm:text-lg font-semibold">Upload Spreadsheets</h3>
+                <p className="text-sm sm:text-base text-gray-600 hidden sm:block">Upload your existing attendance, marks, and fee data files</p>
               </div>
             </div>
 
             {/* Upload Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {Object.entries(expectedColumns).map(([type, columns]) => (
                 <div key={type} className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                   <div className="text-center">

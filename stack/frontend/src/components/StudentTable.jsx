@@ -40,12 +40,97 @@ const StudentTable = ({ students, onStudentSelect, loading }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">Student Risk Assessment</h3>
-        <p className="text-sm text-gray-600">Monitor and take action on at-risk students</p>
+        <p className="text-sm text-gray-600 hidden sm:block">Monitor and take action on at-risk students</p>
       </div>
       
-      <div className="overflow-x-auto">
+      {/* Mobile Card View */}
+      <div className="block sm:hidden">
+        {students.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            <div className="text-gray-400 mb-2">No students found</div>
+            <div className="text-sm">Try adjusting your filters</div>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {students.map((student) => (
+              <div key={student.Student_ID} className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {student.Name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {student.Roll_No} • {student.Department}
+                    </p>
+                  </div>
+                  <RiskBadge risk={student.dropout_risk} />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-gray-500">Attendance:</span>
+                    <span className={`ml-1 font-medium ${
+                      student.Attendance_Percentage < 75 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {student.Attendance_Percentage?.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Score:</span>
+                    <span className={`ml-1 font-medium ${
+                      student.Avg_Test_Score < 60 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {student.Avg_Test_Score?.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Failed:</span>
+                    <span className={`ml-1 font-medium ${
+                      student.Subjects_Failed > 0 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {student.Subjects_Failed || 0}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Fee Due:</span>
+                    <span className={`ml-1 font-medium ${
+                      student.Fee_Due_Days > 30 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {student.Fee_Due_Days || 0}d
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={() => onStudentSelect(student)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                  >
+                    <Eye className="w-3 h-3" />
+                    Details
+                  </button>
+                  
+                  {student.dropout_risk > 0 && (
+                    <button
+                      onClick={() => handleNotify(student.Student_ID, student.Name)}
+                      disabled={notifying[student.Student_ID]}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors"
+                    >
+                      <Bell className="w-3 h-3" />
+                      {notifying[student.Student_ID] ? 'Sending...' : 'Alert'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -129,38 +214,44 @@ const StudentTable = ({ students, onStudentSelect, loading }) => {
                   />
                 </td>
                 
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button
-                    onClick={() => onStudentSelect(student)}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
-                    title="View Details"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Details
-                  </button>
-                  
-                  <button
-                    onClick={() => handleNotify(student.Student_ID, student.Name)}
-                    disabled={notifying[student.Student_ID]}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Send Alert"
-                  >
-                    <Bell className="w-4 h-4" />
-                    {notifying[student.Student_ID] ? 'Sending...' : 'Alert'}
-                  </button>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => onStudentSelect(student)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden lg:inline">Details</span>
+                    </button>
+                    
+                    {student.dropout_risk > 0 && (
+                      <button
+                        onClick={() => handleNotify(student.Student_ID, student.Name)}
+                        disabled={notifying[student.Student_ID]}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 transition-colors disabled:opacity-50"
+                        title="Send Alert"
+                      >
+                        <Bell className="w-4 h-4" />
+                        <span className="hidden lg:inline">
+                          {notifying[student.Student_ID] ? 'Sending...' : 'Alert'}
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        
+        {students.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg mb-2">No students found</div>
+            <div className="text-gray-500 text-sm">Try adjusting your filters</div>
+          </div>
+        )}
       </div>
-      
-      {students.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-lg mb-2">No students found</div>
-          <div className="text-gray-500 text-sm">Try adjusting your filters</div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, BarChart3, Users, AlertTriangle, RefreshCw, Upload, Bell, UserCheck } from 'lucide-react';
+import { Search, Filter, BarChart3, Users, AlertTriangle, RefreshCw, Upload, Bell, UserCheck, Menu, X } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import StudentTable from './components/StudentTable';
 import StudentModal from './components/StudentModal';
@@ -17,6 +17,7 @@ function App() {
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showDataUpload, setShowDataUpload] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [filters, setFilters] = useState({
     department: '',
     riskLevel: '',
@@ -108,22 +109,24 @@ function App() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-8 h-8 text-blue-600" />
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">Ai Powered Dropout Predection And Counselling System</h1>
-                  <p className="text-sm text-gray-600">Student Counseling Dashboard</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
+              <div className="flex items-center space-x-2 min-w-0">
+                <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+                <div className="min-w-0">
+                  <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-gray-900 truncate">
+                    AI Dropout Prediction System
+                  </h1>
+                  <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Student Counseling Dashboard</p>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <div className="hidden md:flex items-center space-x-2 text-sm">
                 <Users className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-600">{students.length} Total Students</span>
+                <span className="text-gray-600">{students.length} Students</span>
                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                 <span className={`font-medium ${atRiskCount > 0 ? 'text-red-600' : 'text-green-600'}`}>
                   {atRiskCount} At Risk
@@ -132,11 +135,11 @@ function App() {
               
               <button
                 onClick={fetchStudents}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
                 disabled={loading}
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
+                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
               </button>
             </div>
           </div>
@@ -144,12 +147,13 @@ function App() {
       </header>
 
       {/* Navigation */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
+      <div className="bg-white border-b sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-6 lg:space-x-8 overflow-x-auto">
             <button
               onClick={() => setCurrentView('dashboard')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                 currentView === 'dashboard'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -163,7 +167,7 @@ function App() {
             
             <button
               onClick={() => setCurrentView('students')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                 currentView === 'students'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -177,7 +181,7 @@ function App() {
 
             <button
               onClick={() => setCurrentView('trends')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                 currentView === 'trends'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -185,13 +189,13 @@ function App() {
             >
               <div className="flex items-center space-x-2">
                 <BarChart3 className="w-4 h-4" />
-                <span>Trend Analysis</span>
+                <span>Analytics</span>
               </div>
             </button>
 
             <button
               onClick={() => setCurrentView('notifications')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                 currentView === 'notifications'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -199,13 +203,13 @@ function App() {
             >
               <div className="flex items-center space-x-2">
                 <Bell className="w-4 h-4" />
-                <span>Notifications</span>
+                <span>Alerts</span>
               </div>
             </button>
 
             <button
               onClick={() => setCurrentView('mentor')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                 currentView === 'mentor'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -213,89 +217,213 @@ function App() {
             >
               <div className="flex items-center space-x-2">
                 <UserCheck className="w-4 h-4" />
-                <span>Mentor Dashboard</span>
+                <span>Mentor</span>
               </div>
             </button>
 
             <button
               onClick={() => setShowDataUpload(true)}
-              className="py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              className="py-3 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap"
             >
               <div className="flex items-center space-x-2">
                 <Upload className="w-4 h-4" />
-                <span>Upload Data</span>
+                <span>Upload</span>
               </div>
             </button>
           </nav>
+
+          {/* Mobile Navigation Header */}
+          <div className="md:hidden flex items-center justify-between py-2">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              <span className="font-medium text-gray-900 capitalize">
+                {currentView === 'trends' ? 'Analytics' : currentView}
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-1 text-xs text-gray-600">
+              <Users className="w-3 h-3" />
+              <span>{students.length}</span>
+              <span className="w-1 h-1 bg-gray-300 rounded-full mx-1"></span>
+              <span className={atRiskCount > 0 ? 'text-red-600' : 'text-green-600'}>
+                {atRiskCount} Risk
+              </span>
+            </div>
+          </div>
+
+          {/* Mobile Navigation Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t bg-white py-2">
+              <div className="grid grid-cols-3 gap-1">
+                <button
+                  onClick={() => {
+                    setCurrentView('dashboard');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center p-3 text-xs rounded-lg transition-colors ${
+                    currentView === 'dashboard'
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <BarChart3 className="w-5 h-5 mb-1" />
+                  <span>Dashboard</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setCurrentView('students');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center p-3 text-xs rounded-lg transition-colors ${
+                    currentView === 'students'
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Users className="w-5 h-5 mb-1" />
+                  <span>Students</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentView('trends');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center p-3 text-xs rounded-lg transition-colors ${
+                    currentView === 'trends'
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <BarChart3 className="w-5 h-5 mb-1" />
+                  <span>Analytics</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentView('notifications');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center p-3 text-xs rounded-lg transition-colors ${
+                    currentView === 'notifications'
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Bell className="w-5 h-5 mb-1" />
+                  <span>Alerts</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentView('mentor');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center p-3 text-xs rounded-lg transition-colors ${
+                    currentView === 'mentor'
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <UserCheck className="w-5 h-5 mb-1" />
+                  <span>Mentor</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowDataUpload(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex flex-col items-center justify-center p-3 text-xs text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <Upload className="w-5 h-5 mb-1" />
+                  <span>Upload</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 pb-20 md:pb-8">
         {currentView === 'dashboard' && <Dashboard />}
         
         {currentView === 'students' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Filters */}
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <div className="flex flex-wrap items-center gap-4">
+            <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+              <div className="flex flex-col space-y-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:space-y-0">
                 <div className="flex items-center space-x-2">
-                  <Filter className="w-4 h-4 text-gray-500" />
+                  <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-gray-700">Filters:</span>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Search className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <input
                     type="text"
-                    placeholder="Search by name, roll no..."
+                    placeholder="Search students..."
                     value={filters.search}
                     onChange={(e) => handleFilterChange('search', e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
                   />
                 </div>
                 
-                <select
-                  value={filters.department}
-                  onChange={(e) => handleFilterChange('department', e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All Departments</option>
-                  {departments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:space-x-2">
+                  <select
+                    value={filters.department}
+                    onChange={(e) => handleFilterChange('department', e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Departments</option>
+                    {departments.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                  
+                  <select
+                    value={filters.riskLevel}
+                    onChange={(e) => handleFilterChange('riskLevel', e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Risks</option>
+                    <option value="0">Low Risk</option>
+                    <option value="1">Medium Risk</option>
+                    <option value="2">High Risk</option>
+                  </select>
+                </div>
                 
-                <select
-                  value={filters.riskLevel}
-                  onChange={(e) => handleFilterChange('riskLevel', e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All Risk Levels</option>
-                  <option value="0">Low Risk</option>
-                  <option value="1">Medium Risk</option>
-                  <option value="2">High Risk</option>
-                </select>
-                
-                <button
-                  onClick={resetFilters}
-                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Clear Filters
-                </button>
-                
-                <div className="text-sm text-gray-600">
-                  Showing {filteredStudents.length} of {students.length} students
+                <div className="flex items-center justify-between sm:block">
+                  <button
+                    onClick={resetFilters}
+                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Clear Filters
+                  </button>
+                  
+                  <div className="text-sm text-gray-600">
+                    <span className="sm:hidden">{filteredStudents.length}/{students.length}</span>
+                    <span className="hidden sm:inline">Showing {filteredStudents.length} of {students.length} students</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Students Table */}
-            <StudentTable 
-              students={filteredStudents} 
-              onStudentSelect={handleStudentSelect}
-              loading={loading}
-            />
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <StudentTable 
+                students={filteredStudents} 
+                onStudentSelect={handleStudentSelect}
+                loading={loading}
+              />
+            </div>
           </div>
         )}
 

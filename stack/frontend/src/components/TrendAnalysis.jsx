@@ -160,21 +160,21 @@ const TrendAnalysis = ({ students = [] }) => {
   const departments = [...new Set(students.map(s => s.department))];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header & Controls */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
           <div className="flex items-center space-x-3">
-            <BarChart3 className="w-6 h-6 text-blue-600" />
+            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Trend Analysis & Early Warning</h2>
-              <p className="text-gray-600">Predictive analytics and pattern detection</p>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Trend Analysis & Early Warning</h2>
+              <p className="text-sm sm:text-base text-gray-600 hidden sm:block">Predictive analytics and pattern detection</p>
             </div>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Time Range</label>
             <select
@@ -216,13 +216,13 @@ const TrendAnalysis = ({ students = [] }) => {
       </div>
 
       {/* Trend Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         {/* Attendance/Performance Trend */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
             {analysisType === 'attendance' ? 'Attendance' : analysisType === 'performance' ? 'Performance' : 'Combined'} Trends
           </h3>
-          <div className="h-80">
+          <div className="h-64 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -254,9 +254,9 @@ const TrendAnalysis = ({ students = [] }) => {
         </div>
 
         {/* Risk Distribution */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Students at Risk Over Time</h3>
-          <div className="h-80">
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Students at Risk Over Time</h3>
+          <div className="h-64 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -272,10 +272,10 @@ const TrendAnalysis = ({ students = [] }) => {
       </div>
 
       {/* Pattern Detection */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
         <div className="flex items-center space-x-3 mb-4">
-          <AlertTriangle className="w-5 h-5 text-orange-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Detected Patterns</h3>
+          <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Detected Patterns</h3>
         </div>
         
         {patterns.length === 0 ? (
