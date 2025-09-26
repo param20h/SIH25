@@ -91,51 +91,105 @@ const DataUpload = ({ onDataUploaded, onClose }) => {
       return;
     }
 
-    // Simple merge by Student_ID
-    const mergedData = attendance.data.map(student => {
-      const studentMarks = marks.data.find(m => m.Student_ID === student.Student_ID) || {};
-      const studentFees = fees.data.find(f => f.Student_ID === student.Student_ID) || {};
-      
-      return {
-        ...student,
-        ...studentMarks,
-        ...studentFees,
-        // Calculate risk flags
-        Attendance_Flag: (student.Attendance_Percentage || 0) < 75 ? 1 : 0,
-        Score_Flag: (studentMarks.Avg_Test_Score || 0) < 60 ? 1 : 0,
-        Fee_Flag: (studentFees.Fee_Due_Days || 0) > 30 ? 1 : 0,
-        Total_Risk_Flags: 0
-      };
-    }).map(student => ({
-      ...student,
-      Total_Risk_Flags: student.Attendance_Flag + student.Score_Flag + student.Fee_Flag,
-      dropout_risk: student.Attendance_Flag + student.Score_Flag + student.Fee_Flag >= 2 ? 2 : 
-                   student.Attendance_Flag + student.Score_Flag + student.Fee_Flag >= 1 ? 1 : 0
-    }));
+    try {
+      // Simple merge by Student_ID
+      const mergedData = attendance.data.map(student => {
+        const studentMarks = marks.data.find(m => m.Student_ID === student.Student_ID) || {};
+        const studentFees = fees.data.find(f => f.Student_ID === student.Student_ID) || {};
+        
+        // Safely parse numeric values with defaults
+        const attendancePerc = parseFloat(student.Attendance_Percentage || 0);
+        const avgScore = parseFloat(studentMarks.Avg_Test_Score || 0);
+        const feeDueDays = parseInt(studentFees.Fee_Due_Days || 0);
+        
+        return {
+          ...student,
+          ...studentMarks,
+          ...studentFees,
+          // Ensure numeric values
+          Attendance_Percentage: attendancePerc,
+          Avg_Test_Score: avgScore,
+          Fee_Due_Days: feeDueDays,
+          // Calculate risk flags
+          Attendance_Flag: attendancePerc < 75 ? 1 : 0,
+          Score_Flag: avgScore < 60 ? 1 : 0,
+          Fee_Flag: feeDueDays > 30 ? 1 : 0,
+          Total_Risk_Flags: 0
+        };
+      }).map(student => {
+        const totalFlags = student.Attendance_Flag + student.Score_Flag + student.Fee_Flag;
+        return {
+          ...student,
+          Total_Risk_Flags: totalFlags,
+          dropout_risk: totalFlags >= 2 ? 2 : totalFlags >= 1 ? 1 : 0
+        };
+      });
 
-    setPreviewData(mergedData);
-    setStep(2);
+      setPreviewData(mergedData);
+      setStep(2);
+    } catch (error) {
+      console.error('Error processing data:', error);
+      alert('Error processing the uploaded files. Please check the data format and try again.');
+    }
   };
 
   const confirmAndUpload = () => {
-    if (previewData) {
-      onDataUploaded(previewData);
-      alert(`✅ Successfully processed ${previewData.length} student records!`);
+    if (previewData && previewData.length > 0) {
+      // Validate data before uploading
+      const validData = previewData.filter(student => 
+        student.Student_ID && 
+        student.Name && 
+        student.Department
+      );
+      
+      if (validData.length !== previewData.length) {
+        const invalid = previewData.length - validData.length;
+        if (!confirm(`${invalid} records are missing required fields (Student_ID, Name, or Department). Continue with ${validData.length} valid records?`)) {
+          return;
+        }
+      }
+      
+      onDataUploaded(validData);
+      
+      // Don't show alert here, let App.jsx handle it
       onClose();
+    } else {
+      alert('❌ No valid data to upload. Please check your files and try again.');
     }
   };
 
   const downloadTemplate = (type) => {
     const headers = expectedColumns[type];
     
-    // Create CSV content with headers and one sample row
+    // Create CSV content with headers and sample rows
     const sampleData = {
-      attendance: ['STU001', 'John Doe', 'Computer Science', '2023', '85', '100', '85.0'],
-      marks: ['STU001', '78', '82', '75', '78.3', '90'],
-      fees: ['STU001', '50000', '35000', '15', 'Partial']
+      attendance: [
+        ['STU001', 'John Doe', 'R001', 'CSE', '85', '100'],
+        ['STU002', 'Jane Smith', 'R002', 'IT', '72', '90'],
+        ['STU003', 'Mike Johnson', 'R003', 'CE', '65', '85'],
+        ['STU004', 'Sarah Wilson', 'R004', 'EEE', '78', '95'],
+        ['STU005', 'David Brown', 'R005', 'CSE', '45', '60']
+      ],
+      marks: [
+        ['STU001', '78', '82', '0', '0'],
+        ['STU002', '65', '70', '1', '0'],
+        ['STU003', '45', '40', '2', '1'],
+        ['STU004', '85', '88', '0', '0'],
+        ['STU005', '35', '25', '3', '2']
+      ],
+      fees: [
+        ['STU001', '50000', '50000', '0', 'Paid'],
+        ['STU002', '50000', '35000', '15', 'Partial'],
+        ['STU003', '50000', '20000', '45', 'Overdue'],
+        ['STU004', '50000', '50000', '0', 'Paid'],
+        ['STU005', '50000', '10000', '120', 'Overdue']
+      ]
     };
     
-    const csvContent = headers.join(',') + '\n' + sampleData[type].join(',');
+    let csvContent = headers.join(',') + '\n';
+    sampleData[type].forEach(row => {
+      csvContent += row.join(',') + '\n';
+    });
     
     // Create and download the CSV file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -251,6 +305,30 @@ const DataUpload = ({ onDataUploaded, onClose }) => {
               </ul>
             </div>
 
+            {/* File Status Summary */}
+            {(uploadedFiles.attendance || uploadedFiles.marks || uploadedFiles.fees) && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3">Upload Status:</h4>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${uploadedFiles.attendance ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <div className="text-gray-700">Attendance</div>
+                    <div className="text-gray-500">{uploadedFiles.attendance ? `${uploadedFiles.attendance.data.length} records` : 'Pending'}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${uploadedFiles.marks ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <div className="text-gray-700">Marks</div>
+                    <div className="text-gray-500">{uploadedFiles.marks ? `${uploadedFiles.marks.data.length} records` : 'Pending'}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${uploadedFiles.fees ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <div className="text-gray-700">Fees</div>
+                    <div className="text-gray-500">{uploadedFiles.fees ? `${uploadedFiles.fees.data.length} records` : 'Pending'}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Next Button */}
             <div className="flex justify-end">
               <button
@@ -323,11 +401,11 @@ const DataUpload = ({ onDataUploaded, onClose }) => {
                   <tbody className="divide-y divide-gray-200">
                     {previewData.slice(0, 5).map((student, index) => (
                       <tr key={index}>
-                        <td className="px-4 py-2 text-sm text-gray-900">{student.Name}</td>
-                        <td className="px-4 py-2 text-sm text-gray-900">{student.Department}</td>
-                        <td className="px-4 py-2 text-sm text-gray-900">{student.Attendance_Percentage}%</td>
-                        <td className="px-4 py-2 text-sm text-gray-900">{student.Avg_Test_Score}%</td>
-                        <td className="px-4 py-2 text-sm text-gray-900">{student.Fee_Status || 'Paid'}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{student.Name || 'N/A'}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{student.Department || 'N/A'}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{student.Attendance_Percentage || 0}%</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{student.Avg_Test_Score || 0}%</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{student.Fee_Status || 'Unknown'}</td>
                         <td className="px-4 py-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             student.dropout_risk === 0 ? 'bg-green-100 text-green-800' :

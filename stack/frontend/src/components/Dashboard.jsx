@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { TrendingUp, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api } from '../services/api';
 
-const Dashboard = () => {
+const Dashboard = ({ students = [] }) => {
   const [riskStats, setRiskStats] = useState(null);
   const [priorityStudents, setPriorityStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,24 +12,66 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [statsResponse, priorityResponse] = await Promise.all([
-          api.getRiskStats(),
-          api.getPriorityStudents(5)
-        ]);
         
-        setRiskStats(statsResponse);
-        setPriorityStudents(priorityResponse);
+        // If we have students data from upload, use it to calculate stats
+        if (students && students.length > 0) {
+          const stats = calculateRiskStats(students);
+          const priority = getPriorityStudents(students, 5);
+          
+          setRiskStats(stats);
+          setPriorityStudents(priority);
+        } else {
+          // Don't fetch from API by default - show empty state instead
+          setRiskStats({
+            total_students: 0,
+            low_risk: 0,
+            medium_risk: 0,
+            high_risk: 0
+          });
+          setPriorityStudents([]);
+        }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('Error processing dashboard data:', error);
+        // Fallback to empty state
+        setRiskStats({
+          total_students: 0,
+          low_risk: 0,
+          medium_risk: 0,
+          high_risk: 0
+        });
+        setPriorityStudents([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [students]);
 
-  if (loading || !riskStats) {
+  // Calculate risk statistics from student data
+  const calculateRiskStats = (studentData) => {
+    const total = studentData.length;
+    const low = studentData.filter(s => s.dropout_risk === 0).length;
+    const medium = studentData.filter(s => s.dropout_risk === 1).length;
+    const high = studentData.filter(s => s.dropout_risk === 2).length;
+    
+    return {
+      total_students: total,
+      low_risk: low,
+      medium_risk: medium,
+      high_risk: high
+    };
+  };
+
+  // Get priority students (high risk first)
+  const getPriorityStudents = (studentData, limit) => {
+    return studentData
+      .filter(s => s.dropout_risk > 0)
+      .sort((a, b) => b.dropout_risk - a.dropout_risk)
+      .slice(0, limit);
+  };
+
+  if (loading) {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -46,18 +88,48 @@ const Dashboard = () => {
     );
   }
 
+  // Provide default values if riskStats is null/undefined
+  const safeRiskStats = riskStats || {
+    total_students: 0,
+    low_risk: 0,
+    medium_risk: 0,
+    high_risk: 0
+  };
+
   const pieData = [
-    { name: 'Low Risk', value: riskStats.low_risk, color: '#10B981' },
-    { name: 'Medium Risk', value: riskStats.medium_risk, color: '#F59E0B' },
-    { name: 'High Risk', value: riskStats.high_risk, color: '#EF4444' }
+    { name: 'Low Risk', value: safeRiskStats.low_risk, color: '#10B981' },
+    { name: 'Medium Risk', value: safeRiskStats.medium_risk, color: '#F59E0B' },
+    { name: 'High Risk', value: safeRiskStats.high_risk, color: '#EF4444' }
   ];
 
-  const departmentData = [
-    { name: 'CSE', low: 15, medium: 8, high: 3 },
-    { name: 'IT', low: 12, medium: 6, high: 2 },
-    { name: 'CE', low: 18, medium: 4, high: 1 },
-    { name: 'EEE', low: 14, medium: 5, high: 2 }
-  ];
+  // Calculate department-wise data from actual student data
+  const getDepartmentData = () => {
+    if (!students || students.length === 0) {
+      // Default data if no students available
+      return [
+        { name: 'CSE', low: 15, medium: 8, high: 3 },
+        { name: 'IT', low: 12, medium: 6, high: 2 },
+        { name: 'CE', low: 18, medium: 4, high: 1 },
+        { name: 'EEE', low: 14, medium: 5, high: 2 }
+      ];
+    }
+
+    const departmentStats = {};
+    students.forEach(student => {
+      const dept = student.Department || 'Unknown';
+      if (!departmentStats[dept]) {
+        departmentStats[dept] = { name: dept, low: 0, medium: 0, high: 0 };
+      }
+      
+      if (student.dropout_risk === 0) departmentStats[dept].low++;
+      else if (student.dropout_risk === 1) departmentStats[dept].medium++;
+      else if (student.dropout_risk === 2) departmentStats[dept].high++;
+    });
+
+    return Object.values(departmentStats).sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const departmentData = getDepartmentData();
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -67,7 +139,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Students</p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{riskStats.total_students}</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{safeRiskStats.total_students}</p>
             </div>
             <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
               <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
@@ -79,7 +151,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Low Risk</p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600">{riskStats.low_risk}</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600">{safeRiskStats.low_risk}</p>
             </div>
             <div className="p-2 sm:p-3 bg-green-100 rounded-lg flex-shrink-0">
               <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
@@ -91,7 +163,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Medium Risk</p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-600">{riskStats.medium_risk}</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-600">{safeRiskStats.medium_risk}</p>
             </div>
             <div className="p-2 sm:p-3 bg-yellow-100 rounded-lg flex-shrink-0">
               <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-yellow-600" />
@@ -103,7 +175,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">High Risk</p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-600">{riskStats.high_risk}</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-600">{safeRiskStats.high_risk}</p>
             </div>
             <div className="p-2 sm:p-3 bg-red-100 rounded-lg flex-shrink-0">
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600" />
@@ -168,7 +240,7 @@ const Dashboard = () => {
         </div>
         <div className="p-4 sm:p-6">
           <div className="space-y-3">
-            {priorityStudents.map((student, index) => (
+            {(priorityStudents || []).map((student, index) => (
               <div key={student.Student_ID} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg space-y-3 sm:space-y-0">
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0">
@@ -187,18 +259,18 @@ const Dashboard = () => {
                   <div className="text-center flex-1 sm:flex-none">
                     <div className="font-medium text-xs sm:text-sm">Attendance</div>
                     <div className={student.Attendance_Percentage < 60 ? 'text-red-600' : 'text-gray-600'}>
-                      {student.Attendance_Percentage.toFixed(1)}%
+                      {(student.Attendance_Percentage || 0).toFixed(1)}%
                     </div>
                   </div>
                   <div className="text-center flex-1 sm:flex-none">
                     <div className="font-medium text-xs sm:text-sm">Avg Score</div>
                     <div className={student.Avg_Test_Score < 50 ? 'text-red-600' : 'text-gray-600'}>
-                      {student.Avg_Test_Score.toFixed(1)}%
+                      {(student.Avg_Test_Score || 0).toFixed(1)}%
                     </div>
                   </div>
                   <div className="text-center flex-1 sm:flex-none">
                     <div className="font-medium text-xs sm:text-sm">Urgency</div>
-                    <div className="text-red-600 font-bold">{student.urgency_score.toFixed(1)}</div>
+                    <div className="text-red-600 font-bold">{(student.urgency_score || 0).toFixed(1)}</div>
                   </div>
                 </div>
               </div>

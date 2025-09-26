@@ -5,6 +5,33 @@ import RiskBadge from './RiskBadge';
 const StudentModal = ({ student, prediction, onClose }) => {
   if (!student || !prediction) return null;
 
+  // Safely access prediction data with fallbacks
+  const safePrediction = {
+    prediction: {
+      risk_level: prediction.prediction?.risk_level || (student.dropout_risk === 2 ? 'High Risk' : student.dropout_risk === 1 ? 'Medium Risk' : 'Low Risk'),
+      risk_score: prediction.prediction?.risk_score ?? student.dropout_risk ?? 0,
+      confidence: prediction.prediction?.confidence ?? 0.85,
+      probabilities: prediction.prediction?.probabilities || {
+        low_risk: 0.33,
+        medium_risk: 0.33,
+        high_risk: 0.33
+      }
+    },
+    recommendations: prediction.recommendations || [],
+    explanation: prediction.explanation || { main_factors: [] },
+    key_stats: prediction.key_stats || {}
+  };
+
+  // Safely access student data with fallbacks
+  const safeStudent = {
+    ...student,
+    Attendance_Percentage: student.Attendance_Percentage ?? 0,
+    Avg_Test_Score: student.Avg_Test_Score ?? 0,
+    Subjects_Failed: student.Subjects_Failed ?? 0,
+    Fee_Due_Days: student.Fee_Due_Days ?? 0,
+    Total_Risk_Flags: student.Total_Risk_Flags ?? 0
+  };
+
   const getRiskColor = (riskScore) => {
     switch (riskScore) {
       case 0: return 'text-green-600';
@@ -50,19 +77,19 @@ const StudentModal = ({ student, prediction, onClose }) => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="mb-2">
-                  <RiskBadge riskLevel={prediction.prediction.risk_level} riskScore={prediction.prediction.risk_score} />
+                  <RiskBadge riskLevel={safePrediction.prediction.risk_level} riskScore={safePrediction.prediction.risk_score} />
                 </div>
                 <p className="text-sm text-gray-600">Current Risk Level</p>
               </div>
               <div className="text-center">
-                <div className={`text-2xl font-bold ${getRiskColor(prediction.prediction.risk_score)} mb-1`}>
-                  {(prediction.prediction.confidence * 100).toFixed(1)}%
+                <div className={`text-2xl font-bold ${getRiskColor(safePrediction.prediction.risk_score)} mb-1`}>
+                  {(safePrediction.prediction.confidence * 100).toFixed(1)}%
                 </div>
                 <p className="text-sm text-gray-600">Prediction Confidence</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900 mb-1">
-                  {student.Total_Risk_Flags}
+                  {safeStudent.Total_Risk_Flags}
                 </div>
                 <p className="text-sm text-gray-600">Active Risk Flags</p>
               </div>
@@ -77,38 +104,38 @@ const StudentModal = ({ student, prediction, onClose }) => {
             </h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 text-center">
-                <div className={`text-lg sm:text-xl font-bold mb-1 ${student.Attendance_Percentage < 75 ? 'text-red-600' : 'text-gray-900'}`}>
-                  {student.Attendance_Percentage.toFixed(1)}%
+                <div className={`text-lg sm:text-xl font-bold mb-1 ${safeStudent.Attendance_Percentage < 75 ? 'text-red-600' : 'text-gray-900'}`}>
+                  {safeStudent.Attendance_Percentage.toFixed(1)}%
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600">Attendance</p>
-                {student.Attendance_Percentage < 75 && (
+                {safeStudent.Attendance_Percentage < 75 && (
                   <div className="mt-1 text-xs text-red-600">Below threshold</div>
                 )}
               </div>
               
               <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 text-center">
-                <div className={`text-lg sm:text-xl font-bold mb-1 ${student.Avg_Test_Score < 60 ? 'text-red-600' : 'text-gray-900'}`}>
-                  {student.Avg_Test_Score.toFixed(1)}%
+                <div className={`text-lg sm:text-xl font-bold mb-1 ${safeStudent.Avg_Test_Score < 60 ? 'text-red-600' : 'text-gray-900'}`}>
+                  {safeStudent.Avg_Test_Score.toFixed(1)}%
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600">Average Score</p>
-                {student.Avg_Test_Score < 60 && (
+                {safeStudent.Avg_Test_Score < 60 && (
                   <div className="mt-1 text-xs text-red-600">Needs improvement</div>
                 )}
               </div>
               
               <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 text-center">
-                <div className={`text-lg sm:text-xl font-bold mb-1 ${student.Subjects_Failed > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                  {student.Subjects_Failed}
+                <div className={`text-lg sm:text-xl font-bold mb-1 ${safeStudent.Subjects_Failed > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                  {safeStudent.Subjects_Failed}
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600">Failed Subjects</p>
               </div>
               
               <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 text-center">
-                <div className={`text-lg sm:text-xl font-bold mb-1 ${student.Fee_Due_Days > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                  {student.Fee_Due_Days}
+                <div className={`text-lg sm:text-xl font-bold mb-1 ${safeStudent.Fee_Due_Days > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                  {safeStudent.Fee_Due_Days}
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600">Fee Due Days</p>
-                {student.Fee_Due_Days > 30 && (
+                {safeStudent.Fee_Due_Days > 30 && (
                   <div className="mt-1 text-xs text-red-600">Overdue</div>
                 )}
               </div>
@@ -127,10 +154,10 @@ const StudentModal = ({ student, prediction, onClose }) => {
                 <div className="flex-1 mx-2 sm:mx-4 bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-green-500 h-2 rounded-full" 
-                    style={{width: `${(prediction.prediction.probabilities.low_risk * 100)}%`}}
+                    style={{width: `${(safePrediction.prediction.probabilities.low_risk * 100)}%`}}
                   ></div>
                 </div>
-                <span className="text-xs sm:text-sm font-medium">{(prediction.prediction.probabilities.low_risk * 100).toFixed(1)}%</span>
+                <span className="text-xs sm:text-sm font-medium">{(safePrediction.prediction.probabilities.low_risk * 100).toFixed(1)}%</span>
               </div>
               
               <div className="flex items-center justify-between">
@@ -141,10 +168,10 @@ const StudentModal = ({ student, prediction, onClose }) => {
                 <div className="flex-1 mx-2 sm:mx-4 bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-yellow-500 h-2 rounded-full" 
-                    style={{width: `${(prediction.prediction.probabilities.medium_risk * 100)}%`}}
+                    style={{width: `${(safePrediction.prediction.probabilities.medium_risk * 100)}%`}}
                   ></div>
                 </div>
-                <span className="text-xs sm:text-sm font-medium">{(prediction.prediction.probabilities.medium_risk * 100).toFixed(1)}%</span>
+                <span className="text-xs sm:text-sm font-medium">{(safePrediction.prediction.probabilities.medium_risk * 100).toFixed(1)}%</span>
               </div>
               
               <div className="flex items-center justify-between">
@@ -155,21 +182,21 @@ const StudentModal = ({ student, prediction, onClose }) => {
                 <div className="flex-1 mx-2 sm:mx-4 bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-red-500 h-2 rounded-full" 
-                    style={{width: `${(prediction.prediction.probabilities.high_risk * 100)}%`}}
+                    style={{width: `${(safePrediction.prediction.probabilities.high_risk * 100)}%`}}
                   ></div>
                 </div>
-                <span className="text-sm font-medium">{(prediction.prediction.probabilities.high_risk * 100).toFixed(1)}%</span>
+                <span className="text-sm font-medium">{(safePrediction.prediction.probabilities.high_risk * 100).toFixed(1)}%</span>
               </div>
             </div>
           </div>
 
           {/* Risk Explanation */}
-          {prediction.explanation && prediction.explanation.main_factors.length > 0 && (
+          {safePrediction.explanation && safePrediction.explanation.main_factors.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Factors Identified</h3>
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <ul className="space-y-2">
-                  {prediction.explanation.main_factors.map((factor, index) => (
+                  {safePrediction.explanation.main_factors.map((factor, index) => (
                     <li key={index} className="flex items-center gap-2 text-orange-800">
                       <AlertTriangle className="w-4 h-4" />
                       {factor}
@@ -181,14 +208,14 @@ const StudentModal = ({ student, prediction, onClose }) => {
           )}
 
           {/* Recommendations */}
-          {prediction.recommendations && prediction.recommendations.length > 0 && (
+          {safePrediction.recommendations && safePrediction.recommendations.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Clock className="w-5 h-5" />
                 Recommended Actions
               </h3>
               <div className="space-y-4">
-                {prediction.recommendations.map((rec, index) => (
+                {safePrediction.recommendations.map((rec, index) => (
                   <div key={index} className={`border rounded-lg p-4 ${getPriorityColor(rec.priority)}`}>
                     <div className="flex items-start justify-between mb-2">
                       <div className="font-medium text-sm uppercase tracking-wide">
@@ -214,19 +241,19 @@ const StudentModal = ({ student, prediction, onClose }) => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="font-medium text-gray-700">Mentor ID:</span>
-                  <span className="ml-2">{student.Mentor_ID}</span>
+                  <span className="ml-2">{safeStudent.Mentor_ID || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Department:</span>
-                  <span className="ml-2">{student.Department}</span>
+                  <span className="ml-2">{safeStudent.Department}</span>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Current Semester:</span>
-                  <span className="ml-2">{student.Semester}</span>
+                  <span className="ml-2">{safeStudent.Semester || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Total Risk Flags:</span>
-                  <span className="ml-2">{student.Total_Risk_Flags}</span>
+                  <span className="ml-2">{safeStudent.Total_Risk_Flags}</span>
                 </div>
               </div>
             </div>

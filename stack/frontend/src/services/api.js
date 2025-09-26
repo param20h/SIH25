@@ -132,69 +132,79 @@ export const api = {
       throw new Error('Student not found');
     }
 
+    // Ensure all numeric values have defaults
+    const safeStudent = {
+      ...student,
+      Attendance_Percentage: student.Attendance_Percentage || 0,
+      Avg_Test_Score: student.Avg_Test_Score || 0,
+      Subjects_Failed: student.Subjects_Failed || 0,
+      Fee_Due_Days: student.Fee_Due_Days || 0,
+      dropout_risk: student.dropout_risk || 0
+    };
+
     // Mock prediction based on student data
     const riskLabels = ['Low Risk', 'Medium Risk', 'High Risk'];
     const recommendations = [];
 
     // Generate recommendations based on risk factors
-    if (student.Attendance_Percentage < 60) {
+    if (safeStudent.Attendance_Percentage < 60) {
       recommendations.push({
         category: 'Attendance',
-        priority: student.Attendance_Percentage < 50 ? 'High' : 'Medium',
-        action: student.Attendance_Percentage < 50 ? 'Schedule immediate mentor meeting' : 'Send attendance warning',
-        description: `Attendance at ${student.Attendance_Percentage.toFixed(1)}% - Intervention needed`,
-        timeline: student.Attendance_Percentage < 50 ? 'Within 24 hours' : 'Within 1 week'
+        priority: safeStudent.Attendance_Percentage < 50 ? 'High' : 'Medium',
+        action: safeStudent.Attendance_Percentage < 50 ? 'Schedule immediate mentor meeting' : 'Send attendance warning',
+        description: `Attendance at ${(safeStudent.Attendance_Percentage || 0).toFixed(1)}% - Intervention needed`,
+        timeline: safeStudent.Attendance_Percentage < 50 ? 'Within 24 hours' : 'Within 1 week'
       });
     }
 
-    if (student.Avg_Test_Score < 50) {
+    if (safeStudent.Avg_Test_Score < 50) {
       recommendations.push({
         category: 'Academic',
-        priority: student.Avg_Test_Score < 40 ? 'High' : 'Medium',
-        action: student.Avg_Test_Score < 40 ? 'Enroll in remedial classes' : 'Provide study resources',
-        description: `Average score ${student.Avg_Test_Score.toFixed(1)}% - Academic support needed`,
+        priority: safeStudent.Avg_Test_Score < 40 ? 'High' : 'Medium',
+        action: safeStudent.Avg_Test_Score < 40 ? 'Enroll in remedial classes' : 'Provide study resources',
+        description: `Average score ${(safeStudent.Avg_Test_Score || 0).toFixed(1)}% - Academic support needed`,
         timeline: 'Start next week'
       });
     }
 
-    if (student.Fee_Due_Days > 30) {
+    if (safeStudent.Fee_Due_Days > 30) {
       recommendations.push({
         category: 'Financial',
-        priority: student.Fee_Due_Days > 60 ? 'High' : 'Medium',
-        action: student.Fee_Due_Days > 60 ? 'Urgent financial counseling' : 'Payment plan discussion',
-        description: `Fees overdue by ${student.Fee_Due_Days} days`,
-        timeline: student.Fee_Due_Days > 60 ? 'Immediate' : 'Within 1 week'
+        priority: safeStudent.Fee_Due_Days > 60 ? 'High' : 'Medium',
+        action: safeStudent.Fee_Due_Days > 60 ? 'Urgent financial counseling' : 'Payment plan discussion',
+        description: `Fees overdue by ${safeStudent.Fee_Due_Days} days`,
+        timeline: safeStudent.Fee_Due_Days > 60 ? 'Immediate' : 'Within 1 week'
       });
     }
 
     return {
       student_id: studentId,
-      student_name: student.Name,
-      department: student.Department,
+      student_name: safeStudent.Name,
+      department: safeStudent.Department,
       prediction: {
-        risk_level: riskLabels[student.dropout_risk],
-        risk_score: student.dropout_risk,
+        risk_level: riskLabels[safeStudent.dropout_risk],
+        risk_score: safeStudent.dropout_risk,
         confidence: 0.85 + Math.random() * 0.1, // Mock confidence
         probabilities: {
-          low_risk: student.dropout_risk === 0 ? 0.8 : student.dropout_risk === 1 ? 0.3 : 0.1,
-          medium_risk: student.dropout_risk === 1 ? 0.6 : 0.2,
-          high_risk: student.dropout_risk === 2 ? 0.8 : student.dropout_risk === 1 ? 0.1 : 0.1
+          low_risk: safeStudent.dropout_risk === 0 ? 0.8 : safeStudent.dropout_risk === 1 ? 0.3 : 0.1,
+          medium_risk: safeStudent.dropout_risk === 1 ? 0.6 : 0.2,
+          high_risk: safeStudent.dropout_risk === 2 ? 0.8 : safeStudent.dropout_risk === 1 ? 0.1 : 0.1
         }
       },
       recommendations,
       explanation: {
         main_factors: [
-          student.Attendance_Percentage < 75 && `Low attendance: ${student.Attendance_Percentage.toFixed(1)}%`,
-          student.Avg_Test_Score < 60 && `Poor performance: ${student.Avg_Test_Score.toFixed(1)}%`,
-          student.Subjects_Failed > 0 && `Failed subjects: ${student.Subjects_Failed}`,
-          student.Fee_Due_Days > 0 && `Overdue fees: ${student.Fee_Due_Days} days`
+          safeStudent.Attendance_Percentage < 75 && `Low attendance: ${(safeStudent.Attendance_Percentage || 0).toFixed(1)}%`,
+          safeStudent.Avg_Test_Score < 60 && `Poor performance: ${(safeStudent.Avg_Test_Score || 0).toFixed(1)}%`,
+          safeStudent.Subjects_Failed > 0 && `Failed subjects: ${safeStudent.Subjects_Failed}`,
+          safeStudent.Fee_Due_Days > 0 && `Overdue fees: ${safeStudent.Fee_Due_Days} days`
         ].filter(Boolean)
       },
       key_stats: {
-        attendance: student.Attendance_Percentage,
-        avg_score: student.Avg_Test_Score,
-        subjects_failed: student.Subjects_Failed,
-        fee_due_days: student.Fee_Due_Days
+        attendance: safeStudent.Attendance_Percentage,
+        avg_score: safeStudent.Avg_Test_Score,
+        subjects_failed: safeStudent.Subjects_Failed,
+        fee_due_days: safeStudent.Fee_Due_Days
       }
     };
   },

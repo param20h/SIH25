@@ -3,7 +3,7 @@ import { Bell, Eye, Mail, Phone } from 'lucide-react';
 import RiskBadge from './RiskBadge';
 import { api } from '../services/api';
 
-const StudentTable = ({ students, onStudentSelect, loading }) => {
+const StudentTable = ({ students = [], onStudentSelect, loading }) => {
   const [notifying, setNotifying] = useState({});
 
   const handleNotify = async (studentId, studentName) => {
@@ -180,7 +180,7 @@ const StudentTable = ({ students, onStudentSelect, loading }) => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="text-sm font-medium text-gray-900">
-                      {student.Attendance_Percentage.toFixed(1)}%
+                      {(student.Attendance_Percentage || 0).toFixed(1)}%
                     </div>
                     {student.Attendance_Percentage < 75 && (
                       <div className="ml-2 w-2 h-2 bg-red-400 rounded-full"></div>
@@ -191,7 +191,7 @@ const StudentTable = ({ students, onStudentSelect, loading }) => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="text-sm font-medium text-gray-900">
-                      {student.Avg_Test_Score.toFixed(1)}%
+                      {(student.Avg_Test_Score || 0).toFixed(1)}%
                     </div>
                     {student.Avg_Test_Score < 50 && (
                       <div className="ml-2 w-2 h-2 bg-red-400 rounded-full"></div>
