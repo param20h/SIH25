@@ -412,7 +412,7 @@ ${report.recommendations.map((r, idx) => `${idx + 1}. ${r}`).join('\n')}
             className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
           >
             <FileText className="w-5 h-5 text-purple-600 mb-2" />
-            <div className="font-medium text-gray-900">Generate Report</div>
+            <div className="font-medium text-gray-900">Generate Reports</div>
             <div className="text-sm text-gray-600">Student progress reports</div>
           </button>
         </div>
