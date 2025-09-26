@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Settings, Users, Calendar, TrendingUp, AlertCircle, CheckCircle, Clock, MessageSquare } from 'lucide-react';
+import { Bell, Settings, Users, Calendar, TrendingUp, AlertCircle, CheckCircle, Clock, MessageSquare, Send, Phone } from 'lucide-react';
 
 const NotificationCenter = ({ students = [] }) => {
   const [notifications, setNotifications] = useState([]);
   const [settings, setSettings] = useState({
     emailEnabled: true,
-    smsEnabled: false,
+    smsEnabled: true,
     whatsappEnabled: true,
     weeklyReport: true,
     threshold: {
@@ -15,6 +15,7 @@ const NotificationCenter = ({ students = [] }) => {
     }
   });
   const [activeTab, setActiveTab] = useState('alerts');
+  const [smsModal, setSmsModal] = useState({ show: false, student: null, message: '' });
 
   useEffect(() => {
     generateNotifications();
@@ -26,76 +27,154 @@ const NotificationCenter = ({ students = [] }) => {
 
     students.forEach(student => {
       // Attendance alerts
-      if (student.attendance < settings.threshold.attendance) {
+      if ((student.Attendance_Percentage || 0) < settings.threshold.attendance) {
         newNotifications.push({
-          id: `att-${student.id}`,
+          id: `att-${student.Student_ID}`,
           type: 'attendance',
-          priority: 'high',
-          student: student.name,
-          studentId: student.id,
-          message: `${student.name} has ${student.attendance}% attendance (below ${settings.threshold.attendance}% threshold)`,
+          priority: (student.Attendance_Percentage || 0) < 60 ? 'high' : 'medium',
+          student: student.Name || 'Unknown Student',
+          studentId: student.Student_ID,
+          rollNo: student.Roll_No,
+          department: student.Department,
+          message: `${student.Name} has ${(student.Attendance_Percentage || 0).toFixed(1)}% attendance (below ${settings.threshold.attendance}% threshold)`,
           timestamp: now,
-          mentor: student.mentor,
-          department: student.department,
           status: 'pending',
-          actionRequired: true
+          actionRequired: true,
+          contactInfo: {
+            phone: student.Phone || '+91-9876543210',
+            email: student.Email || `${student.Student_ID}@college.edu`
+          }
         });
       }
 
       // Performance alerts
-      if (student.lastTestScore < settings.threshold.marks) {
+      if ((student.Avg_Test_Score || 0) < settings.threshold.marks) {
         newNotifications.push({
-          id: `perf-${student.id}`,
+          id: `perf-${student.Student_ID}`,
           type: 'performance',
-          priority: student.lastTestScore < 40 ? 'high' : 'medium',
-          student: student.name,
-          studentId: student.id,
-          message: `${student.name} scored ${student.lastTestScore}% in recent test (below ${settings.threshold.marks}% threshold)`,
+          priority: (student.Avg_Test_Score || 0) < 40 ? 'high' : 'medium',
+          student: student.Name || 'Unknown Student',
+          studentId: student.Student_ID,
+          rollNo: student.Roll_No,
+          department: student.Department,
+          message: `${student.Name} scored ${(student.Avg_Test_Score || 0).toFixed(1)}% in recent tests (below ${settings.threshold.marks}% threshold)`,
           timestamp: now,
-          mentor: student.mentor,
-          department: student.department,
           status: 'pending',
-          actionRequired: true
+          actionRequired: true,
+          contactInfo: {
+            phone: student.Phone || '+91-9876543210',
+            email: student.Email || `${student.Student_ID}@college.edu`
+          }
         });
       }
 
-      // Fee alerts
-      if (student.feeDueDays > settings.threshold.feeDays) {
+      // Fee payment alerts (if applicable)
+      if (student.Fee_Status === 'Pending' || student.Fee_Outstanding > 0) {
         newNotifications.push({
-          id: `fee-${student.id}`,
+          id: `fee-${student.Student_ID}`,
           type: 'fees',
-          priority: student.feeDueDays > 60 ? 'high' : 'medium',
-          student: student.name,
-          studentId: student.id,
-          message: `${student.name} has pending fees for ${student.feeDueDays} days`,
+          priority: 'medium',
+          student: student.Name || 'Unknown Student',
+          studentId: student.Student_ID,
+          rollNo: student.Roll_No,
+          department: student.Department,
+          message: `Fee payment pending for ${student.Name} - Amount: ₹${student.Fee_Outstanding || 'N/A'}`,
           timestamp: now,
-          mentor: student.mentor,
-          department: student.department,
           status: 'pending',
-          actionRequired: true
+          actionRequired: true,
+          contactInfo: {
+            phone: student.Phone || '+91-9876543210',
+            email: student.Email || `${student.Student_ID}@college.edu`
+          }
         });
       }
 
-      // Weekly trend alerts
-      const trendDrop = student.attendanceTrend && student.attendanceTrend < -5;
-      if (trendDrop) {
+      // High dropout risk alerts
+      if (student.dropout_risk === 2) {
         newNotifications.push({
-          id: `trend-${student.id}`,
-          type: 'trend',
-          priority: 'medium',
-          student: student.name,
-          studentId: student.id,
-          message: `${student.name} shows declining attendance trend (-${Math.abs(student.attendanceTrend)}% this week)`,
+          id: `risk-${student.Student_ID}`,
+          type: 'high_risk',
+          priority: 'critical',
+          student: student.Name || 'Unknown Student',
+          studentId: student.Student_ID,
+          rollNo: student.Roll_No,
+          department: student.Department,
+          message: `${student.Name} is at HIGH RISK of dropout. Immediate intervention required.`,
           timestamp: now,
-          mentor: student.mentor,
-          department: student.department,
           status: 'pending',
-          actionRequired: false
+          actionRequired: true,
+          contactInfo: {
+            phone: student.Phone || '+91-9876543210',
+            email: student.Email || `${student.Student_ID}@college.edu`
+          }
         });
       }
     });
 
+    // Sort by priority and timestamp
+    newNotifications.sort((a, b) => {
+      const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+      if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+        return priorityOrder[b.priority] - priorityOrder[a.priority];
+      }
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+
     setNotifications(newNotifications);
+
+  // SMS and Communication Functions
+  const sendSMS = async (phone, message) => {
+    try {
+      // Demo SMS sending function - replace with actual API
+      console.log(`Sending SMS to ${phone}: ${message}`);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In production, use APIs like:
+      // - Twilio: https://www.twilio.com/
+      // - TextLocal: https://www.textlocal.com/
+      // - MSG91: https://msg91.com/
+      // - Fast2SMS: https://www.fast2sms.com/
+      
+      return { success: true, message: 'SMS sent successfully' };
+    } catch (error) {
+      console.error('Error sending SMS:', error);
+      return { success: false, message: 'Failed to send SMS' };
+    }
+  };
+
+  const sendEmail = async (email, subject, message) => {
+    try {
+      console.log(`Sending email to ${email}: ${subject}\n${message}`);
+      // Simulate email sending
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return { success: true, message: 'Email sent successfully' };
+    } catch (error) {
+      console.error('Error sending email:', error);
+      return { success: false, message: 'Failed to send email' };
+    }
+  };
+
+  const handleSendSMS = async () => {
+    if (!smsModal.student || !smsModal.message) return;
+    
+    const result = await sendSMS(smsModal.student.contactInfo.phone, smsModal.message);
+    
+    if (result.success) {
+      alert('SMS sent successfully!');
+      setSmsModal({ show: false, student: null, message: '' });
+      
+      // Mark notification as actioned
+      setNotifications(prev => prev.map(notif => 
+        notif.studentId === smsModal.student.studentId 
+          ? { ...notif, status: 'actioned', lastContact: new Date() }
+          : notif
+      ));
+    } else {
+      alert('Failed to send SMS: ' + result.message);
+    }
+  };
   };
 
   const getNotificationIcon = (type) => {
@@ -103,6 +182,7 @@ const NotificationCenter = ({ students = [] }) => {
       attendance: <Users className="w-4 h-4" />,
       performance: <TrendingUp className="w-4 h-4" />,
       fees: <Calendar className="w-4 h-4" />,
+      high_risk: <AlertCircle className="w-4 h-4" />,
       trend: <AlertCircle className="w-4 h-4" />
     };
     return icons[type] || <Bell className="w-4 h-4" />;
@@ -110,6 +190,7 @@ const NotificationCenter = ({ students = [] }) => {
 
   const getPriorityColor = (priority) => {
     const colors = {
+      critical: 'bg-red-100 text-red-800 border-red-200',
       high: 'bg-red-100 text-red-800 border-red-200',
       medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       low: 'bg-blue-100 text-blue-800 border-blue-200'
@@ -140,7 +221,7 @@ const NotificationCenter = ({ students = [] }) => {
         } : notif
       ));
       
-      alert(`✅ ${method.toUpperCase()} notification sent to ${notification.mentor} about ${notification.student}`);
+      alert(`✅ ${method.toUpperCase()} notification sent to ${notification.student} (${notification.department} Dept)`);
     } catch (error) {
       alert(`❌ Failed to send ${method} notification: ${error.message}`);
     }
@@ -241,6 +322,7 @@ const NotificationCenter = ({ students = [] }) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            notification.priority === 'critical' ? 'bg-red-600 text-white' :
                             notification.priority === 'high' ? 'bg-red-600 text-white' :
                             notification.priority === 'medium' ? 'bg-yellow-600 text-white' :
                             'bg-blue-600 text-white'
@@ -255,8 +337,8 @@ const NotificationCenter = ({ students = [] }) => {
                           {notification.message}
                         </p>
                         <div className="mt-1 text-xs text-gray-500 flex items-center space-x-4">
-                          <span>Mentor: {notification.mentor}</span>
                           <span>Department: {notification.department}</span>
+                          <span>Roll No: {notification.rollNo}</span>
                           <span>{notification.timestamp.toLocaleString()}</span>
                         </div>
                       </div>
@@ -272,10 +354,18 @@ const NotificationCenter = ({ students = [] }) => {
                       )}
                       {settings.smsEnabled && (
                         <button
-                          onClick={() => sendNotification(notification, 'sms')}
-                          className="px-3 py-1 bg-white border border-gray-300 text-sm text-gray-700 rounded hover:bg-gray-50"
+                          onClick={() => setSmsModal({ 
+                            show: true, 
+                            student: { 
+                              ...notification, 
+                              contactInfo: notification.contactInfo 
+                            }, 
+                            message: `Alert: ${notification.message}. Please contact the student immediately.` 
+                          })}
+                          className="px-3 py-1 bg-white border border-gray-300 text-sm text-gray-700 rounded hover:bg-gray-50 flex items-center gap-1"
                         >
-                          📱 SMS
+                          <Phone className="w-3 h-3" />
+                          SMS
                         </button>
                       )}
                       {settings.whatsappEnabled && (
@@ -317,7 +407,7 @@ const NotificationCenter = ({ students = [] }) => {
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{notification.message}</p>
                       <div className="mt-1 text-xs text-gray-500 flex items-center space-x-4">
-                        <span>Sent to: {notification.mentor}</span>
+                        <span>Sent to: {notification.department} Department</span>
                         <span>Methods: {notification.sentMethods?.join(', ')}</span>
                         <span>At: {notification.sentAt?.toLocaleString()}</span>
                       </div>
@@ -425,6 +515,66 @@ const NotificationCenter = ({ students = [] }) => {
           </div>
         )}
       </div>
+
+      {/* SMS Modal */}
+      {smsModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Send SMS Alert</h3>
+              <button
+                onClick={() => setSmsModal({ show: false, student: null, message: '' })}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Student: {smsModal.student?.student}
+                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone: {smsModal.student?.contactInfo?.phone}
+                </label>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Message
+                </label>
+                <textarea
+                  value={smsModal.message}
+                  onChange={(e) => setSmsModal(prev => ({ ...prev, message: e.target.value }))}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your message..."
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  {smsModal.message.length}/160 characters
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setSmsModal({ show: false, student: null, message: '' })}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendSMS}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  Send SMS
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
