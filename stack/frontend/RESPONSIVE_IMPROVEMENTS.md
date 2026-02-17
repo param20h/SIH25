@@ -13,7 +13,7 @@ Complete mobile-first responsive design implementation for the SIH 2025 Dropout 
 - Adaptive header layout with collapsible navigation
 
 **Mobile Features:**
-- Hamburger menu for mobile navigation
+- Hamburger menu for mobile
 - Collapsible sidebar on mobile
 - Touch-friendly button sizes
 - Responsive typography
